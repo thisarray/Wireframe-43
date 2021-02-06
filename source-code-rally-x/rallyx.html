@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>rallyx</title>
+  <script src="../../jsgame0.js"></script>
+  <style type="text/css" media="screen">
+body {
+  background-color: white;
+  color: black;
+}
+.hidden {
+  display: none;
+}
+#original {
+  margin-left: 1em;
+}
+  </style>
+</head>
+
+<body>
+<section id="imageLoader" class="hidden">
+  <img class="hidden" src="images/car.png" alt="car" data-name="car">
+  <img class="hidden" src="images/collisionmap.png" alt="collisionmap" data-name="collisionmap">
+  <img class="hidden" src="images/colourmap.png" alt="colourmap" data-name="colourmap">
+  <img class="hidden" src="images/flag.png" alt="flag" data-name="flag">
+  <img class="hidden" src="images/sidepanel.png" alt="sidepanel" data-name="sidepanel">
+</section>
+
+<main>
+<h1>rallyx</h1>
+
+<canvas id="screen">
+The game screen appears here if your browser supports the Canvas API.
+</canvas>
+<section id="controls">
+  <button type="button" id="reset">Reset</button>
+  <button type="button" id="pause">Pause</button>
+</section>
+
+<h2>Attribution</h2>
+
+<p><a href="https://wireframe.raspberrypi.org/issues/43">Code a Rally-X-style mini-map, pages 64-65, by Mark Vanstone</a>.</p>
+
+<p>Licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/legalcode">Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported</a>.</p>
+
+<h2>Original Python code</h2>
+
+<pre id="original"><code>
+# Rally X
+from pygame import image, Color
+
+car = Actor(&#x27;car&#x27;, center=(300, 300))
+car.angle = 180
+mapx = -100
+mapy = 0
+directionMap = {0:(0,1), 90:(1,0), 180:(0,-1), 270:(-1,0)}
+speed = 5
+collisionmap = image.load(&#x27;images/collisionmap.png&#x27;)
+count = gameStatus = 0
+flagsXY=[(200,1900),(300,1100),(300,300),(400,600),(600,1600),(800,350)]
+flags = []
+for f in range(0, 6):
+    flags.append(Actor(&#x27;flag&#x27;, center=(0, 0)))
+    flags[len(flags)-1].collected = False
+
+def draw():
+    screen.blit(&quot;colourmap&quot;,(mapx,mapy))
+    car.draw()
+    for f in range(0, 6):
+        if not flags[f].collected: flags[f].draw()
+    screen.blit(&quot;sidepanel&quot;,(600,0))
+    drawMiniMap()
+    if gameStatus == 1 : screen.draw.text(&quot;YOU GOT ALL THE FLAGS!&quot;, center = (400, 300), owidth=0.5, ocolor=(255,255,255), color=(0,0,255) , fontsize=80)
+
+def update():
+    global mapx,mapy,count,gameStatus
+    if gameStatus == 0 :
+        checkInput()
+        testmove = (int((-mapx+300) - ((directionMap[car.angle][0]*8) * speed)),int((-mapy+300) - ((directionMap[car.angle][1]*8) * speed)))
+        if collisionmap.get_at(testmove) == Color(&#x27;black&#x27;):
+            mapx += directionMap[car.angle][0] * speed
+            mapy += directionMap[car.angle][1] * speed
+        else:
+            car.angle += 90
+            if car.angle == 360: car.angle = 0
+        if collisionmap.get_at((int(-mapx+330), int(-mapy+300))) == Color(&#x27;white&#x27;): mapx += 1
+        if collisionmap.get_at((int(-mapx+270), int(-mapy+300))) == Color(&#x27;white&#x27;): mapx -= 1
+        if collisionmap.get_at((int(-mapx+300), int(-mapy+330))) == Color(&#x27;white&#x27;): mapy += 1
+        if collisionmap.get_at((int(-mapx+300), int(-mapy+270))) == Color(&#x27;white&#x27;): mapy -= 1
+        flagCount = 0
+        for f in range(0, 6):
+            flags[f].x = flagsXY[f][0]+mapx
+            flags[f].y = flagsXY[f][1]+mapy
+            if flags[f].collidepoint(car.pos):
+                flags[f].collected = True
+            if flags[f].collected == True: flagCount += 1
+        count += 1
+        if flagCount == 6: gameStatus = 1
+
+def checkInput():
+    if keyboard.left: car.angle = 90
+    if keyboard.right: car.angle = 270
+    if keyboard.up: car.angle = 0
+    if keyboard.down: car.angle = 180
+
+def drawMiniMap():
+    carRect = Rect((658+(-mapx/5),208+(-mapy/5)),(4,4))
+    if count%10 &gt; 5:
+        screen.draw.filled_rect(carRect,(0,0,0))
+    else:
+        screen.draw.filled_rect(carRect,(100,100,100))
+    for f in range(0, 6):
+        if not flags[f].collected:
+            flagRect = Rect((600+(flagsXY[f][0]/5),150+(flagsXY[f][1]/5)),(4,4))
+            screen.draw.filled_rect(flagRect,(255,255,0))
+</code></pre>
+</main>
+
+<script>
+// Rally X
+WIDTH = 1000;
+HEIGHT = 2000;
+
+const DIRECTION_MAP = new Map([
+  [0, [0, 1]],
+  [90, [1, 0]],
+  [180, [0, -1]],
+  [270, [-1, 0]]
+]);
+const SPEED = 5;
+const FLAGS_XY = [
+  [200, 1900],
+  [300, 1100],
+  [300, 300],
+  [400, 600],
+  [600, 1600],
+  [800, 350]
+];
+
+var car, mapx, mapy, collisionmap, count, gameStatus, flags;
+
+function reset() {
+  car = new Actor('car');
+  car.center = [300, 300];
+  car.angle = 180;
+  mapx = -100;
+  mapy = 0;
+
+  screen.clear();
+  screen.blit('collisionmap', [0, 0]);
+  collisionmap = screen.getSurface();
+
+  count = 0;
+  gameStatus = 0;
+
+  flags = [];
+  for (let f = 0; f < FLAGS_XY.length; f++) {
+    let flag = new Actor('flag');
+    flag.center = [0, 0];
+    flag.collected = false;
+    flags.push(flag);
+  }
+}
+
+function draw() {
+  screen.blit("colourmap", [mapx, mapy]);
+  car.draw();
+  for (let f of flags) {
+    if (!f.collected) {
+      f.draw();
+    }
+  }
+  screen.blit("sidepanel", [600, 0]);
+  drawMiniMap();
+  if (gameStatus === 1) {
+    screen.draw.text("YOU GOT ALL THE FLAGS!", {
+      center: [400, 300],
+      owidth: 0.5,
+      ocolor: [255, 255, 255],
+      color: [0, 0, 255],
+      fontsize: 80
+    });
+  }
+}
+
+function update() {
+  if (gameStatus === 0) {
+    checkInput();
+    let testMoveX = Math.trunc(-mapx + 300 - (DIRECTION_MAP.get(car.angle)[0] * 8 * SPEED)),
+        testMoveY = Math.trunc(-mapy + 300 - (DIRECTION_MAP.get(car.angle)[1] * 8 * SPEED));
+    if (Surface.isColorEqual(collisionmap.getAt(testMoveX, testMoveY), [0, 0, 0])) {
+      mapx += DIRECTION_MAP.get(car.angle)[0] * SPEED;
+      mapy += DIRECTION_MAP.get(car.angle)[1] * SPEED;
+    }
+    else {
+      car.angle += 90;
+      if (car.angle === 360) {
+        car.angle = 0;
+      }
+    }
+    if (Surface.isColorEqual(collisionmap.getAt(Math.trunc(-mapx + 330), Math.trunc(-mapy + 300)), [255, 255, 255])) {
+      mapx += 1;
+    }
+    if (Surface.isColorEqual(collisionmap.getAt(Math.trunc(-mapx + 270), Math.trunc(-mapy + 300)), [255, 255, 255])) {
+      mapx -= 1;
+    }
+    if (Surface.isColorEqual(collisionmap.getAt(Math.trunc(-mapx + 300), Math.trunc(-mapy + 330)), [255, 255, 255])) {
+      mapy += 1;
+    }
+    if (Surface.isColorEqual(collisionmap.getAt(Math.trunc(-mapx + 300), Math.trunc(-mapy + 270)), [255, 255, 255])) {
+      mapy -= 1;
+    }
+    let flagCount = 0;
+    for (let f = 0; f < FLAGS_XY.length; f++) {
+      flags[f].posx = FLAGS_XY[f][0] + mapx;
+      flags[f].posy = FLAGS_XY[f][1] + mapy;
+      if (flags[f].collidepoint(car.pos)) {
+        flags[f].collected = true;
+      }
+      if (flags[f].collected) {
+        flagCount += 1;
+      }
+    }
+    count += 1;
+    if (flagCount === FLAGS_XY.length) {
+      gameStatus = 1;
+    }
+  }
+}
+
+function checkInput() {
+  if (keyboard[keys.LEFT]) {
+    car.angle = 90;
+  }
+  if (keyboard[keys.RIGHT]) {
+    car.angle = 270;
+  }
+  if (keyboard[keys.UP]) {
+    car.angle = 0;
+  }
+  if (keyboard[keys.DOWN]) {
+    car.angle = 180;
+  }
+}
+
+function drawMiniMap() {
+  let carRect = new Rect([658 - (mapx / 5), 208 - (mapy / 5)], [4, 4]);
+  if ((count % 10) > 5) {
+    screen.draw.filled_rect(carRect, [0, 0, 0]);
+  }
+  else {
+    screen.draw.filled_rect(carRect, [100, 100, 100]);
+  }
+  for (let f = 0; f < FLAGS_XY.length; f++) {
+    if (!flags[f].collected) {
+      screen.draw.filled_rect(new Rect([600 + (FLAGS_XY[f][0] / 5), 150 + (FLAGS_XY[f][1] / 5)], [4, 4]), [255, 255, 0]);
+    }
+  }
+}
+
+window.addEventListener('load', (event) => {
+  images.LOAD('#imageLoader img');
+  // Non-standard order for Surface
+  screen.set_mode('#screen', '#reset', '#pause');
+  reset();
+  screen.draw.playButton();
+});
+</script>
+</body>
+
+</html>
