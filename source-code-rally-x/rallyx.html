@@ -123,8 +123,6 @@ def drawMiniMap():
 
 <script>
 // Rally X
-WIDTH = 1000;
-HEIGHT = 2000;
 
 const DIRECTION_MAP = new Map([
   [0, [0, 1]],
@@ -151,9 +149,7 @@ function reset() {
   mapx = -100;
   mapy = 0;
 
-  screen.clear();
-  screen.blit('collisionmap', [0, 0]);
-  collisionmap = screen.getSurface();
+  collisionmap = Surface.fromImage('collisionmap');
 
   count = 0;
   gameStatus = 0;
